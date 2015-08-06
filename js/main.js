@@ -275,10 +275,20 @@ var main = {
 		this.setExitText();
 	},
 	moveBats: function() {
+		var newDungeonSprites = [], alreadyMoved = [];
+		for (var i = 0; i < 22; i++) {
+			newDungeonSprites[i] = [];
+			alreadyMoved[i] = [];
+			for (var j = 0; j < 22; j++) {
+				newDungeonSprites[i][j] = null;
+				alreadyMoved[i][j] = false;
+			}
+		}
+
 		for (var i = 0; i < 22; i++) {
 			for (var j = 0; j < 22; j++) {
-				if (this.dungeonMap[i][j] === 'Z') {
-
+				if (this.dungeonMap[i][j] === 'Z' && !alreadyMoved[i][j]) {
+					
 					var r = Math.random(), shouldMove = true, nI = i, nJ = j;
 					if (r > 0.80) {
 						shouldMove = false;
@@ -295,14 +305,24 @@ var main = {
 					var valid = shouldMove && nI >= 0 && nI < 22 && nJ >= 0 && nJ < 22;
 					var validMove = valid ? (this.dungeonMap[nI][nJ] === '-') : false;
 					if (validMove) {
-						// TODO: Re-render is slow. Change to only update the positions.
+						/* Faster because it only changes the coordinates of a existing sprite. */
+						var c = this.getCoords(nI, nJ);
+						newDungeonSprites[nI][nJ] = this.dungeonSprites[i][j];
+						newDungeonSprites[nI][nJ].x = c.x;
+						newDungeonSprites[nI][nJ].y = c.y;
+
 						this.dungeonMap[i][j] = '-';
-						this.dungeonSprites[i][j].destroy(); 
-						this.addZubat(nI, nJ);
+						this.dungeonMap[nI][nJ] = 'Z';
+						alreadyMoved[nI][nJ] = true;
+					} else {
+						newDungeonSprites[i][j] = this.dungeonSprites[i][j];
 					}
+				} else if (!alreadyMoved[i][j]) {
+					newDungeonSprites[i][j] = this.dungeonSprites[i][j];
 				}
 			}
 		}	
+		this.dungeonSprites = newDungeonSprites;
 	},
 	updatePlayer: function(i, j) {
 		var changedCon = i !== this.playerPos.i || j !== this.playerPos.j;
